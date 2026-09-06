@@ -1,0 +1,96 @@
+.stock-page {
+  padding: 30px;
+}
+
+.stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.stock-header h1 {
+  margin-bottom: 5px;
+}
+
+.stock-header p {
+  margin-top: 0;
+  color: #6b7280;
+}
+
+.stock-form-card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.stock-form {
+  display: grid;
+  gap: 15px;
+}
+
+.stock-form input {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.stock-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.stock-buttons button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+}
+
+.stock-in-button {
+  background: #16a34a;
+}
+
+.stock-out-button {
+  background: #dc2626;
+}
+
+.stock-success {
+  padding: 12px;
+  background: #dcfce7;
+  border-radius: 6px;
+}
+
+.stock-error {
+  padding: 12px;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.stock-history {
+  margin-top: 30px;
+}
+
+.stock-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 10px;
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.stock-table th {
+  background: #f9fafb;
+}

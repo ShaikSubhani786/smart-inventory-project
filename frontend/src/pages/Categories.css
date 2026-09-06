@@ -1,0 +1,115 @@
+.categories-page {
+  padding: 30px;
+}
+
+.categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.categories-header h1 {
+  margin-bottom: 5px;
+}
+
+.categories-header p {
+  color: #6b7280;
+  margin-top: 0;
+}
+
+.category-form {
+  display: flex;
+  gap: 10px;
+  margin: 25px 0;
+}
+
+.category-form input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.category-form button {
+  padding: 12px 18px;
+  border: none;
+  background: #1f2937;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.categories-table-container {
+  background: white;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.categories-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.categories-table th,
+.categories-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.categories-table th {
+  background: #f9fafb;
+}
+
+.delete-button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.categories-error {
+  background: #fee2e2;
+  padding: 12px;
+  border-radius: 6px;
+}
+.category-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-category-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.edit-category-button:hover {
+  background: #1d4ed8;
+}
+
+.cancel-category-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #6b7280;
+  color: white;
+  cursor: pointer;
+}
+
+.cancel-category-button:hover {
+  background: #4b5563;
+}
+
+.categories-success {
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  background: #dcfce7;
+}

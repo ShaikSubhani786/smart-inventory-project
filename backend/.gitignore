@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env.*
+
+# Keep example env file
+!.env.example
+
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing cache
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Uploaded product images
+uploads/
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store

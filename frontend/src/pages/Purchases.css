@@ -1,0 +1,178 @@
+.purchases-page {
+  padding: 30px;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+.purchases-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.purchases-header h1 {
+  margin: 0 0 8px;
+}
+
+.purchases-header p {
+  margin: 5px 0;
+}
+
+.purchase-user-info {
+  margin-top: 10px;
+}
+
+.back-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* PURCHASE FORM */
+
+.purchase-form-card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.purchase-form-card h2 {
+  margin-top: 0;
+}
+
+.purchase-form {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.purchase-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.purchase-form-group label {
+  font-weight: 600;
+}
+
+.purchase-form-group input {
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+
+.purchase-form-group input:focus {
+  border-color: #777;
+}
+
+.purchase-form-actions {
+  grid-column: 1 / -1;
+}
+
+.add-purchase-button {
+  padding: 11px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* MESSAGES */
+
+.purchases-success {
+  padding: 12px;
+  border-radius: 6px;
+  background: #e8f5e9;
+  margin-bottom: 15px;
+}
+
+.purchases-error {
+  padding: 12px;
+  border-radius: 6px;
+  background: #ffebee;
+  margin-bottom: 15px;
+}
+
+.purchase-view-only {
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* HISTORY */
+
+.purchases-history {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.purchases-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.purchases-history-header h2 {
+  margin: 0;
+}
+
+.purchases-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.purchases-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.purchases-table th,
+.purchases-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.purchases-table th {
+  font-weight: 600;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1000px) {
+  .purchase-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .purchases-page {
+    padding: 15px;
+  }
+
+  .purchases-header {
+    flex-direction: column;
+  }
+
+  .purchase-form {
+    grid-template-columns: 1fr;
+  }
+
+  .purchases-history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

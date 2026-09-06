@@ -1,0 +1,84 @@
+.sales-page {
+  padding: 30px;
+}
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.sales-header h1 {
+  margin-bottom: 5px;
+}
+
+.sales-header p {
+  margin-top: 0;
+  color: #6b7280;
+}
+
+.sales-form-card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.sales-form {
+  display: grid;
+  gap: 15px;
+}
+
+.sales-form input {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.create-sale-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  background: #2563eb;
+}
+
+.sales-success {
+  padding: 12px;
+  background: #dcfce7;
+  border-radius: 6px;
+}
+
+.sales-error {
+  padding: 12px;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.sales-history {
+  margin-top: 30px;
+}
+
+.sales-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 10px;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-table th,
+.sales-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sales-table th {
+  background: #f9fafb;
+}

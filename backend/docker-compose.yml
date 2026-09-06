@@ -1,0 +1,10 @@
+services:
+  backend:
+    build: .
+    container_name: smart-inventory-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:Subhani%40786@host.docker.internal:5432/inventory_db

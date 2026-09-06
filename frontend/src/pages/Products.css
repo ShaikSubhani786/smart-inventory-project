@@ -1,0 +1,276 @@
+.products-page {
+  padding: 30px;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.products-header h1 {
+  margin-bottom: 5px;
+}
+
+.products-header p {
+  color: #6b7280;
+  margin-top: 0;
+}
+
+.product-count {
+  background: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.product-search {
+  display: flex;
+  gap: 10px;
+  margin: 25px 0;
+}
+
+.product-search input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.product-search button {
+  padding: 12px 20px;
+  border: none;
+  background: #1f2937;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.products-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 10px;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.products-table th,
+.products-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.products-table th {
+  background: #f9fafb;
+}
+
+.product-image {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.products-error {
+  background: #fee2e2;
+  padding: 12px;
+  border-radius: 6px;
+}
+.back-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #1f2937;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.pagination button {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #1f2937;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.products-header-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.add-product-button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #16a34a;
+  color: white;
+}
+
+.add-product-form {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+}
+
+.add-product-form h2 {
+  margin-top: 0;
+}
+
+.product-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.product-form-grid input {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.save-product-button {
+  margin-top: 15px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.delete-product-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  background: #dc2626;
+  color: white;
+  cursor: pointer;
+}
+
+.image-input {
+  max-width: 170px;
+}
+
+.products-success {
+  padding: 12px;
+  border-radius: 6px;
+  background: #dcfce7;
+  margin-bottom: 15px;
+}
+
+.products-error {
+  padding: 12px;
+  border-radius: 6px;
+  background: #fee2e2;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 800px) {
+  .product-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .products-header {
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .products-header-buttons {
+    flex-direction: column;
+  }
+}
+.product-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-product-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.cancel-edit-button {
+  margin-top: 15px;
+  margin-left: 10px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #6b7280;
+  color: white;
+  cursor: pointer;
+}
+.product-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.product-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-product-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.edit-product-button:hover {
+  background: #1d4ed8;
+}
+
+.delete-product-button:hover {
+  background: #b91c1c;
+}
+
+.cancel-edit-button {
+  margin-top: 0;
+  margin-left: 0;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #6b7280;
+  color: white;
+  cursor: pointer;
+}
+
+.cancel-edit-button:hover {
+  background: #4b5563;
+}
+
+.save-product-button:hover {
+  background: #1d4ed8;
+}
+
+.add-product-button:hover {
+  background: #15803d;
+}
