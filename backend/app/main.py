@@ -1,7 +1,8 @@
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import os
+
 from app.core.exceptions import (
     http_exception_handler,
     global_exception_handler
@@ -21,17 +22,32 @@ from app.api.v1.reports import router as reports_router
 app = FastAPI(
     title="Smart Inventory Management System"
 )
+
+
+# Frontend URL from environment variable
+frontend_url = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
+
+
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ "http://localhost:5173",
+    allow_origins=[
+        "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
+        frontend_url,
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+
+# Exception handlers
 app.add_exception_handler(
     HTTPException,
     http_exception_handler
@@ -41,6 +57,7 @@ app.add_exception_handler(
     Exception,
     global_exception_handler
 )
+
 
 # Serve uploaded files
 app.mount(
