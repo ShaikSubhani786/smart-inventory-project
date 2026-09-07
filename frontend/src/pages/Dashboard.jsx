@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 import API_BASE_URL from "../config";
+
 function Dashboard() {
   const navigate = useNavigate();
 
@@ -15,7 +16,6 @@ function Dashboard() {
   });
 
   const [user, setUser] = useState(null);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -45,8 +45,7 @@ function Dashboard() {
 
         setUser(data);
       } catch (error) {
-        console.error(error);
-
+        console.error("User fetch error:", error);
         setError("Unable to load user information");
       }
     };
@@ -57,7 +56,7 @@ function Dashboard() {
     const fetchDashboard = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/v1/dashboard`,
+          `${API_BASE_URL}/api/v1/dashboard/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -73,14 +72,12 @@ function Dashboard() {
               data.detail ||
               "Failed to load dashboard"
           );
-
           return;
         }
 
         setStats(data);
       } catch (error) {
-        console.error(error);
-
+        console.error("Dashboard fetch error:", error);
         setError("Unable to connect to backend");
       }
     };
@@ -94,14 +91,12 @@ function Dashboard() {
   // -----------------------------
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-
     navigate("/");
   };
 
   return (
     <div className="dashboard-layout">
       {/* SIDEBAR */}
-
       <aside className="sidebar">
         <div>
           <h2>Smart Inventory</h2>
@@ -120,65 +115,49 @@ function Dashboard() {
 
           <nav>
             <button
-              onClick={() =>
-                navigate("/dashboard")
-              }
+              onClick={() => navigate("/dashboard")}
             >
               Dashboard
             </button>
 
             <button
-              onClick={() =>
-                navigate("/products")
-              }
+              onClick={() => navigate("/products")}
             >
               Products
             </button>
 
             <button
-              onClick={() =>
-                navigate("/categories")
-              }
+              onClick={() => navigate("/categories")}
             >
               Categories
             </button>
 
             <button
-              onClick={() =>
-                navigate("/suppliers")
-              }
+              onClick={() => navigate("/suppliers")}
             >
               Suppliers
             </button>
 
             <button
-              onClick={() =>
-                navigate("/stock")
-              }
+              onClick={() => navigate("/stock")}
             >
               Stock
             </button>
 
             <button
-              onClick={() =>
-                navigate("/sales")
-              }
+              onClick={() => navigate("/sales")}
             >
               Sales
             </button>
 
             <button
-              onClick={() =>
-                navigate("/purchases")
-              }
+              onClick={() => navigate("/purchases")}
             >
               Purchases
             </button>
 
             <button
-              onClick={() =>
-                navigate("/reports")
-              }
+              onClick={() => navigate("/reports")}
             >
               Reports
             </button>
@@ -194,7 +173,6 @@ function Dashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-
       <main className="dashboard-content">
         <div className="dashboard-header">
           <div>
@@ -240,7 +218,6 @@ function Dashboard() {
         </div>
 
         {/* ERROR */}
-
         {error && (
           <p className="dashboard-error">
             {error}
@@ -248,42 +225,30 @@ function Dashboard() {
         )}
 
         {/* DASHBOARD STATS */}
-
         <div className="stats-grid">
           <div className="stat-card">
             <h3>Total Products</h3>
-
             <p>{stats.total_products}</p>
           </div>
 
           <div className="stat-card">
             <h3>Total Categories</h3>
-
-            <p>
-              {stats.total_categories}
-            </p>
+            <p>{stats.total_categories}</p>
           </div>
 
           <div className="stat-card">
             <h3>Total Stock</h3>
-
             <p>{stats.total_stock}</p>
           </div>
 
           <div className="stat-card">
             <h3>Low Stock</h3>
-
-            <p>
-              {stats.low_stock_products}
-            </p>
+            <p>{stats.low_stock_products}</p>
           </div>
 
           <div className="stat-card">
             <h3>Out of Stock</h3>
-
-            <p>
-              {stats.out_of_stock_products}
-            </p>
+            <p>{stats.out_of_stock_products}</p>
           </div>
         </div>
       </main>

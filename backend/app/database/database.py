@@ -6,7 +6,7 @@ from app.database.base import Base
 
 print("Step 1: Imports successful")
 print("Step 2: Settings imported")
-print("DATABASE_URL:", settings.DATABASE_URL)
+
 
 engine = create_engine(settings.DATABASE_URL)
 
