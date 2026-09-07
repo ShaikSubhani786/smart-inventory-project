@@ -7,4 +7,4 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://postgres:Subhani%40786@host.docker.internal:5432/inventory_db
+      DATABASE_URL: postgresql://postgres:Subhani%40786786@host.docker.internal:5432/inventory_db
