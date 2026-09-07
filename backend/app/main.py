@@ -59,6 +59,9 @@ app.add_exception_handler(
 )
 
 
+# Create uploads directory if it does not exist
+os.makedirs("uploads", exist_ok=True)
+
 # Serve uploaded files
 app.mount(
     "/uploads",
