@@ -66,11 +66,10 @@ body {
 
 .dashboard-header h1 {
   margin-bottom: 5px;
-}
-
-.dashboard-header p {
-  margin-top: 0;
-  color: #6b7280;
+  color: #2563eb;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .stats-grid {

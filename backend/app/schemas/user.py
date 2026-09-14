@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -23,7 +24,8 @@ class UserCreate(BaseModel):
         description="Password"
     )
 
-    # Reject unexpected fields such as "role"
+    # Prevent users from sending role="admin"
+    # during registration
     model_config = ConfigDict(
         extra="forbid"
     )
@@ -31,15 +33,26 @@ class UserCreate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
+
     password: str
+
+    role: Literal[
+        "user",
+        "admin"
+    ] = "user"
 
 
 class UserResponse(BaseModel):
     id: int
+
     username: str
+
     email: EmailStr
+
     role: str
+
     is_active: bool
+
     created_at: datetime
 
     model_config = ConfigDict(
@@ -49,4 +62,5 @@ class UserResponse(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+
     token_type: str

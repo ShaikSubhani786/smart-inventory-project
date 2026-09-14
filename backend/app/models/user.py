@@ -9,7 +9,10 @@ from app.database.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
 
     username: Mapped[str] = mapped_column(
         String(100),
@@ -28,9 +31,12 @@ class User(Base):
         nullable=False
     )
 
+    # Every newly registered account is a normal user
     role: Mapped[str] = mapped_column(
         String(20),
-        default="staff"
+        nullable=False,
+        default="user",
+        server_default="user"
     )
 
     is_active: Mapped[bool] = mapped_column(
