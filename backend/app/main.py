@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -57,17 +56,6 @@ app.add_exception_handler(
 app.add_exception_handler(
     Exception,
     global_exception_handler
-)
-
-
-# Create uploads directory if it does not exist
-os.makedirs("uploads", exist_ok=True)
-
-# Serve uploaded files
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads"
 )
 
 
