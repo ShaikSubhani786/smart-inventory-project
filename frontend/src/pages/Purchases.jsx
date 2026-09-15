@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Purchases.css";
 
 import API_BASE_URL from "../config";
+
 function Purchases() {
   const navigate = useNavigate();
 
@@ -16,51 +17,23 @@ function Purchases() {
   const [supplierId, setSupplierId] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [purchasePrice, setPurchasePrice] = useState("");
+  const [purchasePrice, setPurchasePrice] =
+    useState("");
 
   // MESSAGES
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const token = localStorage.getItem("access_token");
+  const token =
+    localStorage.getItem("access_token");
 
   // Admin check
   const isAdmin = user?.role === "admin";
 
   // -------------------------------------------------
-  // FETCH CURRENT LOGGED-IN USER
-  // -------------------------------------------------
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      setUser(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load user information");
-    }
-  };
-
-  // -------------------------------------------------
   // FETCH ALL PURCHASES
+  // Used again after creating a purchase
   // -------------------------------------------------
-
   const fetchPurchases = async () => {
     try {
       const response = await fetch(
@@ -76,7 +49,9 @@ function Purchases() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("access_token");
+          localStorage.removeItem(
+            "access_token"
+          );
           navigate("/");
           return;
         }
@@ -90,28 +65,116 @@ function Purchases() {
         return;
       }
 
-      setPurchases(data);
+      setPurchases(
+        Array.isArray(data) ? data : []
+      );
       setError("");
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
     }
   };
 
   // -------------------------------------------------
   // LOAD PAGE DATA
   // -------------------------------------------------
-
   useEffect(() => {
-    fetchCurrentUser();
-    fetchPurchases();
-  }, []);
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const loadPageData = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [
+          userResponse,
+          purchasesResponse,
+        ] = await Promise.all([
+          fetch(
+            `${API_BASE_URL}/api/v1/auth/me`,
+            {
+              headers,
+            }
+          ),
+
+          fetch(
+            `${API_BASE_URL}/api/v1/purchases/`,
+            {
+              headers,
+            }
+          ),
+        ]);
+
+        if (
+          userResponse.status === 401 ||
+          purchasesResponse.status === 401
+        ) {
+          localStorage.removeItem(
+            "access_token"
+          );
+          navigate("/");
+          return;
+        }
+
+        const userData =
+          await userResponse.json();
+
+        const purchasesData =
+          await purchasesResponse.json();
+
+        if (!userResponse.ok) {
+          setError(
+            userData.detail ||
+              userData.message ||
+              "Unable to load user information"
+          );
+          return;
+        }
+
+        if (!purchasesResponse.ok) {
+          setError(
+            purchasesData.detail ||
+              purchasesData.message ||
+              "Failed to load purchases"
+          );
+          return;
+        }
+
+        setUser(userData);
+
+        setPurchases(
+          Array.isArray(purchasesData)
+            ? purchasesData
+            : []
+        );
+
+        setError("");
+      } catch (error) {
+        console.error(
+          "Purchases initial load error:",
+          error
+        );
+
+        setError(
+          "Unable to connect to backend"
+        );
+      }
+    };
+
+    loadPageData();
+  }, [token, navigate]);
 
   // -------------------------------------------------
   // CREATE PURCHASE
   // ADMIN ONLY
   // -------------------------------------------------
-
   const handleCreatePurchase = async (e) => {
     e.preventDefault();
 
@@ -120,7 +183,9 @@ function Purchases() {
 
     // Extra frontend protection
     if (!isAdmin) {
-      setError("Only admin can add purchases");
+      setError(
+        "Only admin can add purchases"
+      );
       return;
     }
 
@@ -136,22 +201,30 @@ function Purchases() {
     }
 
     if (Number(supplierId) <= 0) {
-      setError("Supplier ID must be greater than 0");
+      setError(
+        "Supplier ID must be greater than 0"
+      );
       return;
     }
 
     if (Number(productId) <= 0) {
-      setError("Product ID must be greater than 0");
+      setError(
+        "Product ID must be greater than 0"
+      );
       return;
     }
 
     if (Number(quantity) <= 0) {
-      setError("Quantity must be greater than 0");
+      setError(
+        "Quantity must be greater than 0"
+      );
       return;
     }
 
     if (Number(purchasePrice) <= 0) {
-      setError("Purchase price must be greater than 0");
+      setError(
+        "Purchase price must be greater than 0"
+      );
       return;
     }
 
@@ -162,15 +235,20 @@ function Purchases() {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
             Authorization: `Bearer ${token}`,
           },
 
           body: JSON.stringify({
-            supplier_id: Number(supplierId),
+            supplier_id: Number(
+              supplierId
+            ),
             product_id: Number(productId),
             quantity: Number(quantity),
-            purchase_price: Number(purchasePrice),
+            purchase_price: Number(
+              purchasePrice
+            ),
           }),
         }
       );
@@ -179,7 +257,9 @@ function Purchases() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("access_token");
+          localStorage.removeItem(
+            "access_token"
+          );
           navigate("/");
           return;
         }
@@ -199,15 +279,19 @@ function Purchases() {
       setQuantity("");
       setPurchasePrice("");
 
-      setMessage("Purchase created successfully");
+      setMessage(
+        "Purchase created successfully"
+      );
       setError("");
 
       // Refresh purchase history
-      fetchPurchases();
+      await fetchPurchases();
     } catch (error) {
       console.error(error);
 
-      setError("Unable to connect to backend");
+      setError(
+        "Unable to connect to backend"
+      );
       setMessage("");
     }
   };
@@ -215,7 +299,6 @@ function Purchases() {
   // -------------------------------------------------
   // FORMAT DATE
   // -------------------------------------------------
-
   const formatDate = (date) => {
     if (!date) {
       return "-";
@@ -227,10 +310,8 @@ function Purchases() {
   // -------------------------------------------------
   // PAGE
   // -------------------------------------------------
-
   return (
     <div className="purchases-page">
-
       {/* HEADER */}
 
       <div className="purchases-header">
@@ -238,16 +319,17 @@ function Purchases() {
           <h1>Purchases</h1>
 
           <p>
-            Manage inventory purchases and purchase history
+            Manage inventory purchases and
+            purchase history
           </p>
 
           {user && (
             <p className="purchase-user-info">
               Logged in as:{" "}
-              <strong>{user.username}</strong>{" "}
-              <span>
-                ({user.role})
-              </span>
+              <strong>
+                {user.username}
+              </strong>{" "}
+              <span>({user.role})</span>
             </p>
           )}
         </div>
@@ -255,7 +337,9 @@ function Purchases() {
         <button
           type="button"
           className="back-button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           Back to Dashboard
         </button>
@@ -286,17 +370,22 @@ function Purchases() {
           <h2>Add Purchase</h2>
 
           <p>
-            Add purchased stock from a supplier.
+            Add purchased stock from a
+            supplier.
           </p>
 
           <form
             className="purchase-form"
-            onSubmit={handleCreatePurchase}
+            onSubmit={
+              handleCreatePurchase
+            }
           >
             {/* SUPPLIER ID */}
 
             <div className="purchase-form-group">
-              <label>Supplier ID</label>
+              <label>
+                Supplier ID
+              </label>
 
               <input
                 type="number"
@@ -304,7 +393,9 @@ function Purchases() {
                 placeholder="Enter Supplier ID"
                 value={supplierId}
                 onChange={(e) =>
-                  setSupplierId(e.target.value)
+                  setSupplierId(
+                    e.target.value
+                  )
                 }
                 required
               />
@@ -313,7 +404,9 @@ function Purchases() {
             {/* PRODUCT ID */}
 
             <div className="purchase-form-group">
-              <label>Product ID</label>
+              <label>
+                Product ID
+              </label>
 
               <input
                 type="number"
@@ -321,7 +414,9 @@ function Purchases() {
                 placeholder="Enter Product ID"
                 value={productId}
                 onChange={(e) =>
-                  setProductId(e.target.value)
+                  setProductId(
+                    e.target.value
+                  )
                 }
                 required
               />
@@ -330,7 +425,9 @@ function Purchases() {
             {/* QUANTITY */}
 
             <div className="purchase-form-group">
-              <label>Quantity</label>
+              <label>
+                Quantity
+              </label>
 
               <input
                 type="number"
@@ -338,7 +435,9 @@ function Purchases() {
                 placeholder="Enter Quantity"
                 value={quantity}
                 onChange={(e) =>
-                  setQuantity(e.target.value)
+                  setQuantity(
+                    e.target.value
+                  )
                 }
                 required
               />
@@ -347,7 +446,9 @@ function Purchases() {
             {/* PURCHASE PRICE */}
 
             <div className="purchase-form-group">
-              <label>Purchase Price</label>
+              <label>
+                Purchase Price
+              </label>
 
               <input
                 type="number"
@@ -356,7 +457,9 @@ function Purchases() {
                 placeholder="Enter Purchase Price"
                 value={purchasePrice}
                 onChange={(e) =>
-                  setPurchasePrice(e.target.value)
+                  setPurchasePrice(
+                    e.target.value
+                  )
                 }
                 required
               />
@@ -374,12 +477,13 @@ function Purchases() {
         </div>
       )}
 
-      {/* STAFF VIEW-ONLY MESSAGE */}
+      {/* USER VIEW-ONLY MESSAGE */}
 
       {!isAdmin && user && (
         <div className="purchase-view-only">
           <p>
-            You have view-only access to purchases.
+            You have view-only access to
+            purchases.
           </p>
         </div>
       )}
@@ -388,17 +492,20 @@ function Purchases() {
 
       <div className="purchases-history">
         <div className="purchases-history-header">
-          <h2>Purchase History</h2>
+          <h2>
+            Purchase History
+          </h2>
 
           <p>
             Total Purchases:{" "}
-            <strong>{purchases.length}</strong>
+            <strong>
+              {purchases.length}
+            </strong>
           </p>
         </div>
 
         <div className="purchases-table-container">
           <table className="purchases-table">
-
             <thead>
               <tr>
                 <th>S.No</th>
@@ -406,9 +513,15 @@ function Purchases() {
                 <th>Supplier ID</th>
                 <th>Product ID</th>
                 <th>Quantity</th>
-                <th>Purchase Price</th>
-                <th>Total Amount</th>
-                <th>Purchased By</th>
+                <th>
+                  Purchase Price
+                </th>
+                <th>
+                  Total Amount
+                </th>
+                <th>
+                  Purchased By
+                </th>
                 <th>Date</th>
               </tr>
             </thead>
@@ -422,41 +535,45 @@ function Purchases() {
                 </tr>
               ) : (
                 purchases.map(
-                  (purchase, index) => (
-                    <tr key={purchase.id}>
-
+                  (
+                    purchase,
+                    index
+                  ) => (
+                    <tr
+                      key={purchase.id}
+                    >
                       {/* SERIAL NUMBER */}
-
                       <td>
                         {index + 1}
                       </td>
 
                       {/* PURCHASE ID */}
-
                       <td>
                         {purchase.id}
                       </td>
 
                       {/* SUPPLIER */}
-
                       <td>
-                        {purchase.supplier_id}
+                        {
+                          purchase.supplier_id
+                        }
                       </td>
 
                       {/* PRODUCT */}
-
                       <td>
-                        {purchase.product_id}
+                        {
+                          purchase.product_id
+                        }
                       </td>
 
                       {/* QUANTITY */}
-
                       <td>
-                        {purchase.quantity}
+                        {
+                          purchase.quantity
+                        }
                       </td>
 
                       {/* PURCHASE PRICE */}
-
                       <td>
                         ₹
                         {Number(
@@ -465,7 +582,6 @@ function Purchases() {
                       </td>
 
                       {/* TOTAL AMOUNT */}
-
                       <td>
                         ₹
                         {Number(
@@ -473,26 +589,24 @@ function Purchases() {
                         ).toFixed(2)}
                       </td>
 
-                      {/* PURCHASED BY USER ID */}
-
+                      {/* PURCHASED BY */}
                       <td>
-                        {purchase.purchased_by}
+                        {
+                          purchase.purchased_by
+                        }
                       </td>
 
                       {/* DATE */}
-
                       <td>
                         {formatDate(
                           purchase.created_at
                         )}
                       </td>
-
                     </tr>
                   )
                 )
               )}
             </tbody>
-
           </table>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Stock.css";
 
 import API_BASE_URL from "../config";
+
 function Stock() {
   const navigate = useNavigate();
 
@@ -21,39 +22,9 @@ function Stock() {
   const isAdmin = user?.role === "admin";
 
   // -----------------------------
-  // FETCH CURRENT USER
-  // -----------------------------
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      setUser(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load user information");
-    }
-  };
-
-  // -----------------------------
   // FETCH STOCK HISTORY
+  // Used again after stock transactions
   // -----------------------------
-
   const fetchHistory = async () => {
     try {
       const response = await fetch(
@@ -67,6 +38,12 @@ function Stock() {
 
       const data = await response.json();
 
+      if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        navigate("/");
+        return;
+      }
+
       if (!response.ok) {
         setError(
           data.message ||
@@ -76,24 +53,117 @@ function Stock() {
         return;
       }
 
-      setTransactions(data);
+      setTransactions(
+        Array.isArray(data) ? data : []
+      );
+
       setError("");
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
     }
   };
 
+  // -----------------------------
+  // INITIAL PAGE LOAD
+  // -----------------------------
   useEffect(() => {
-    fetchCurrentUser();
-    fetchHistory();
-  }, []);
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const loadPageData = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [
+          userResponse,
+          historyResponse,
+        ] = await Promise.all([
+          fetch(
+            `${API_BASE_URL}/api/v1/auth/me`,
+            {
+              headers,
+            }
+          ),
+
+          fetch(
+            `${API_BASE_URL}/api/v1/stock/history`,
+            {
+              headers,
+            }
+          ),
+        ]);
+
+        if (
+          userResponse.status === 401 ||
+          historyResponse.status === 401
+        ) {
+          localStorage.removeItem(
+            "access_token"
+          );
+          navigate("/");
+          return;
+        }
+
+        const userData =
+          await userResponse.json();
+
+        const historyData =
+          await historyResponse.json();
+
+        if (!userResponse.ok) {
+          setError(
+            userData.message ||
+              userData.detail ||
+              "Unable to load user information"
+          );
+          return;
+        }
+
+        if (!historyResponse.ok) {
+          setError(
+            historyData.message ||
+              historyData.detail ||
+              "Failed to load stock history"
+          );
+          return;
+        }
+
+        setUser(userData);
+
+        setTransactions(
+          Array.isArray(historyData)
+            ? historyData
+            : []
+        );
+
+        setError("");
+      } catch (error) {
+        console.error(
+          "Stock initial load error:",
+          error
+        );
+
+        setError(
+          "Unable to connect to backend"
+        );
+      }
+    };
+
+    loadPageData();
+  }, [token, navigate]);
 
   // -----------------------------
   // STOCK IN / STOCK OUT
   // Admin only
   // -----------------------------
-
   const handleStockTransaction = async (type) => {
     if (!isAdmin) {
       setError(
@@ -106,6 +176,14 @@ function Stock() {
     if (!productId || !quantity) {
       setError(
         "Product ID and quantity are required"
+      );
+      setMessage("");
+      return;
+    }
+
+    if (Number(productId) <= 0) {
+      setError(
+        "Product ID must be greater than 0"
       );
       setMessage("");
       return;
@@ -125,20 +203,33 @@ function Stock() {
           ? `${API_BASE_URL}/api/v1/stock/in`
           : `${API_BASE_URL}/api/v1/stock/out`;
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_id: Number(productId),
-          quantity: Number(quantity),
-          remarks: remarks,
-        }),
-      });
+      const response = await fetch(
+        endpoint,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            product_id: Number(productId),
+            quantity: Number(quantity),
+            remarks,
+          }),
+        }
+      );
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
 
       if (!response.ok) {
         setError(
@@ -161,16 +252,22 @@ function Stock() {
       setQuantity("");
       setRemarks("");
 
-      fetchHistory();
+      // Refresh history after transaction
+      await fetchHistory();
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
       setMessage("");
     }
   };
 
   return (
     <div className="stock-page">
+      {/* HEADER */}
+
       <div className="stock-header">
         <div>
           <h1>Stock Management</h1>
@@ -183,13 +280,16 @@ function Stock() {
           {user && (
             <p>
               Logged in as:{" "}
-              <strong>{user.username}</strong>{" "}
+              <strong>
+                {user.username}
+              </strong>{" "}
               ({user.role})
             </p>
           )}
         </div>
 
         <button
+          type="button"
           className="back-button"
           onClick={() =>
             navigate("/dashboard")
@@ -212,7 +312,9 @@ function Stock() {
               placeholder="Product ID"
               value={productId}
               onChange={(e) =>
-                setProductId(e.target.value)
+                setProductId(
+                  e.target.value
+                )
               }
             />
 
@@ -222,7 +324,9 @@ function Stock() {
               placeholder="Quantity"
               value={quantity}
               onChange={(e) =>
-                setQuantity(e.target.value)
+                setQuantity(
+                  e.target.value
+                )
               }
             />
 
@@ -231,24 +335,32 @@ function Stock() {
               placeholder="Remarks"
               value={remarks}
               onChange={(e) =>
-                setRemarks(e.target.value)
+                setRemarks(
+                  e.target.value
+                )
               }
             />
 
             <div className="stock-buttons">
               <button
+                type="button"
                 className="stock-in-button"
                 onClick={() =>
-                  handleStockTransaction("in")
+                  handleStockTransaction(
+                    "in"
+                  )
                 }
               >
                 Stock In
               </button>
 
               <button
+                type="button"
                 className="stock-out-button"
                 onClick={() =>
-                  handleStockTransaction("out")
+                  handleStockTransaction(
+                    "out"
+                  )
                 }
               >
                 Stock Out
@@ -258,11 +370,15 @@ function Stock() {
         </div>
       )}
 
+      {/* SUCCESS MESSAGE */}
+
       {message && (
         <p className="stock-success">
           {message}
         </p>
       )}
+
+      {/* ERROR MESSAGE */}
 
       {error && (
         <p className="stock-error">
@@ -270,13 +386,15 @@ function Stock() {
         </p>
       )}
 
+      {/* STOCK HISTORY */}
+
       <div className="stock-history">
         <h2>Transaction History</h2>
 
         {!isAdmin && user && (
           <p>
-            You have view-only access to stock
-            history.
+            You have view-only access to
+            stock history.
           </p>
         )}
 
@@ -298,19 +416,33 @@ function Stock() {
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan="7">
-                    No stock transactions found
+                    No stock transactions
+                    found
                   </td>
                 </tr>
               ) : (
                 transactions.map(
-                  (transaction, index) => (
-                    <tr key={transaction.id}>
-                      <td>{index + 1}</td>
-
-                      <td>{transaction.id}</td>
+                  (
+                    transaction,
+                    index
+                  ) => (
+                    <tr
+                      key={
+                        transaction.id
+                      }
+                    >
+                      <td>
+                        {index + 1}
+                      </td>
 
                       <td>
-                        {transaction.product_id}
+                        {transaction.id}
+                      </td>
+
+                      <td>
+                        {
+                          transaction.product_id
+                        }
                       </td>
 
                       <td>
@@ -320,11 +452,14 @@ function Stock() {
                       </td>
 
                       <td>
-                        {transaction.quantity}
+                        {
+                          transaction.quantity
+                        }
                       </td>
 
                       <td>
-                        {transaction.remarks || "-"}
+                        {transaction.remarks ||
+                          "-"}
                       </td>
 
                       <td>

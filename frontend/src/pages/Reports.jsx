@@ -3,51 +3,24 @@ import { useNavigate } from "react-router-dom";
 import "./Reports.css";
 
 import API_BASE_URL from "../config";
+
 function Reports() {
   const navigate = useNavigate();
 
-  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [lowStockProducts, setLowStockProducts] =
+    useState([]);
   const [user, setUser] = useState(null);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("access_token");
-
-  // -------------------------------------------------
-  // FETCH CURRENT USER
-  // -------------------------------------------------
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      setUser(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load user information");
-    }
-  };
+  const token =
+    localStorage.getItem("access_token");
 
   // -------------------------------------------------
   // FETCH LOW STOCK REPORT
+  // Used by the Refresh button
   // -------------------------------------------------
-
   const fetchLowStockReport = async () => {
     try {
       setLoading(true);
@@ -65,7 +38,9 @@ function Reports() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("access_token");
+          localStorage.removeItem(
+            "access_token"
+          );
           navigate("/");
           return;
         }
@@ -80,32 +55,129 @@ function Reports() {
         return;
       }
 
-      setLowStockProducts(data);
+      setLowStockProducts(
+        Array.isArray(data) ? data : []
+      );
+
       setError("");
       setLoading(false);
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
+
       setLoading(false);
     }
   };
 
   // -------------------------------------------------
-  // LOAD PAGE
+  // INITIAL PAGE LOAD
   // -------------------------------------------------
-
   useEffect(() => {
-    fetchCurrentUser();
-    fetchLowStockReport();
-  }, []);
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const loadPageData = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [
+          userResponse,
+          reportResponse,
+        ] = await Promise.all([
+          fetch(
+            `${API_BASE_URL}/api/v1/auth/me`,
+            {
+              headers,
+            }
+          ),
+
+          fetch(
+            `${API_BASE_URL}/api/v1/reports/low-stock`,
+            {
+              headers,
+            }
+          ),
+        ]);
+
+        if (
+          userResponse.status === 401 ||
+          reportResponse.status === 401
+        ) {
+          localStorage.removeItem(
+            "access_token"
+          );
+
+          navigate("/");
+          return;
+        }
+
+        const userData =
+          await userResponse.json();
+
+        const reportData =
+          await reportResponse.json();
+
+        if (!userResponse.ok) {
+          setError(
+            userData.message ||
+              userData.detail ||
+              "Unable to load user information"
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        if (!reportResponse.ok) {
+          setError(
+            reportData.message ||
+              reportData.detail ||
+              "Failed to load low-stock report"
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        setUser(userData);
+
+        setLowStockProducts(
+          Array.isArray(reportData)
+            ? reportData
+            : []
+        );
+
+        setError("");
+        setLoading(false);
+      } catch (error) {
+        console.error(
+          "Reports initial load error:",
+          error
+        );
+
+        setError(
+          "Unable to connect to backend"
+        );
+
+        setLoading(false);
+      }
+    };
+
+    loadPageData();
+  }, [token, navigate]);
 
   // -------------------------------------------------
   // PAGE
   // -------------------------------------------------
-
   return (
     <div className="reports-page">
-
       {/* HEADER */}
 
       <div className="reports-header">
@@ -113,13 +185,16 @@ function Reports() {
           <h1>Reports</h1>
 
           <p>
-            View inventory reports and low-stock products
+            View inventory reports and
+            low-stock products
           </p>
 
           {user && (
             <p className="reports-user-info">
               Logged in as:{" "}
-              <strong>{user.username}</strong>{" "}
+              <strong>
+                {user.username}
+              </strong>{" "}
               ({user.role})
             </p>
           )}
@@ -128,7 +203,9 @@ function Reports() {
         <button
           type="button"
           className="back-button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           Back to Dashboard
         </button>
@@ -137,14 +214,14 @@ function Reports() {
       {/* REPORT CARD */}
 
       <div className="report-card">
-
         <div className="report-title-row">
           <div>
             <h2>Low Stock Report</h2>
 
             <p>
-              Products that have reached or fallen below
-              their minimum stock level.
+              Products that have reached or
+              fallen below their minimum
+              stock level.
             </p>
           </div>
 
@@ -161,7 +238,9 @@ function Reports() {
 
         <div className="report-summary">
           <div className="report-summary-card">
-            <span>Low Stock Products</span>
+            <span>
+              Low Stock Products
+            </span>
 
             <strong>
               {lowStockProducts.length}
@@ -187,9 +266,7 @@ function Reports() {
           </p>
         ) : (
           <div className="reports-table-container">
-
             <table className="reports-table">
-
               <thead>
                 <tr>
                   <th>S.No</th>
@@ -197,26 +274,37 @@ function Reports() {
                   <th>Product</th>
                   <th>SKU</th>
                   <th>Price</th>
-                  <th>Current Stock</th>
-                  <th>Minimum Stock</th>
-                  <th>Category ID</th>
+                  <th>
+                    Current Stock
+                  </th>
+                  <th>
+                    Minimum Stock
+                  </th>
+                  <th>
+                    Category ID
+                  </th>
                   <th>Status</th>
                 </tr>
               </thead>
 
               <tbody>
-
-                {lowStockProducts.length === 0 ? (
+                {lowStockProducts.length ===
+                0 ? (
                   <tr>
                     <td colSpan="9">
-                      No low-stock products found
+                      No low-stock products
+                      found
                     </td>
                   </tr>
                 ) : (
                   lowStockProducts.map(
-                    (product, index) => (
-                      <tr key={product.id}>
-
+                    (
+                      product,
+                      index
+                    ) => (
+                      <tr
+                        key={product.id}
+                      >
                         <td>
                           {index + 1}
                         </td>
@@ -227,7 +315,6 @@ function Reports() {
 
                         <td>
                           <div className="report-product">
-
                             {product.image_url && (
                               <img
                                 src={
@@ -237,13 +324,17 @@ function Reports() {
                                     ? product.image_url
                                     : `${API_BASE_URL}${product.image_url}`
                                 }
-                                alt={product.name}
+                                alt={
+                                  product.name
+                                }
                               />
                             )}
 
                             <div>
                               <strong>
-                                {product.name}
+                                {
+                                  product.name
+                                }
                               </strong>
 
                               <small>
@@ -251,7 +342,6 @@ function Reports() {
                                   "No description"}
                               </small>
                             </div>
-
                           </div>
                         </td>
 
@@ -267,15 +357,21 @@ function Reports() {
                         </td>
 
                         <td>
-                          {product.quantity}
+                          {
+                            product.quantity
+                          }
                         </td>
 
                         <td>
-                          {product.minimum_stock}
+                          {
+                            product.minimum_stock
+                          }
                         </td>
 
                         <td>
-                          {product.category_id}
+                          {
+                            product.category_id
+                          }
                         </td>
 
                         <td>
@@ -283,19 +379,14 @@ function Reports() {
                             Low Stock
                           </span>
                         </td>
-
                       </tr>
                     )
                   )
                 )}
-
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </div>
     </div>
   );

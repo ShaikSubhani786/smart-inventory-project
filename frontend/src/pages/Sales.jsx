@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Sales.css";
 
 import API_BASE_URL from "../config";
+
 function Sales() {
   const navigate = useNavigate();
 
@@ -19,39 +20,9 @@ function Sales() {
   const token = localStorage.getItem("access_token");
 
   // -------------------------------------------------
-  // FETCH CURRENT USER
-  // -------------------------------------------------
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      setUser(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load user information");
-    }
-  };
-
-  // -------------------------------------------------
   // FETCH SALES
+  // Used again after creating a sale
   // -------------------------------------------------
-
   const fetchSales = async () => {
     try {
       const response = await fetch(
@@ -81,7 +52,7 @@ function Sales() {
         return;
       }
 
-      setSales(data);
+      setSales(Array.isArray(data) ? data : []);
       setError("");
     } catch (error) {
       console.error(error);
@@ -90,30 +61,98 @@ function Sales() {
   };
 
   // -------------------------------------------------
-  // LOAD PAGE
+  // INITIAL PAGE LOAD
   // -------------------------------------------------
-
   useEffect(() => {
-    fetchCurrentUser();
-    fetchSales();
-  }, []);
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    const loadPageData = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [userResponse, salesResponse] =
+          await Promise.all([
+            fetch(
+              `${API_BASE_URL}/api/v1/auth/me`,
+              {
+                headers,
+              }
+            ),
+
+            fetch(
+              `${API_BASE_URL}/api/v1/sales/`,
+              {
+                headers,
+              }
+            ),
+          ]);
+
+        if (
+          userResponse.status === 401 ||
+          salesResponse.status === 401
+        ) {
+          localStorage.removeItem("access_token");
+          navigate("/");
+          return;
+        }
+
+        const userData = await userResponse.json();
+        const salesData = await salesResponse.json();
+
+        if (!userResponse.ok) {
+          setError(
+            userData.message ||
+              userData.detail ||
+              "Unable to load user information"
+          );
+          return;
+        }
+
+        if (!salesResponse.ok) {
+          setError(
+            salesData.message ||
+              salesData.detail ||
+              "Failed to load sales"
+          );
+          return;
+        }
+
+        setUser(userData);
+
+        setSales(
+          Array.isArray(salesData) ? salesData : []
+        );
+
+        setError("");
+      } catch (error) {
+        console.error(
+          "Sales initial load error:",
+          error
+        );
+
+        setError("Unable to connect to backend");
+      }
+    };
+
+    loadPageData();
+  }, [token, navigate]);
 
   // -------------------------------------------------
   // CREATE SALE
   // ALL LOGGED-IN USERS
   // -------------------------------------------------
-
   const handleCreateSale = async (e) => {
     e.preventDefault();
 
     setError("");
     setMessage("");
 
-    if (
-      !productId ||
-      !quantity ||
-      !price
-    ) {
+    if (!productId || !quantity || !price) {
       setError(
         "Product ID, quantity and price are required"
       );
@@ -185,14 +224,11 @@ function Sales() {
       setQuantity("");
       setPrice("");
 
-      fetchSales();
+      await fetchSales();
     } catch (error) {
       console.error(error);
 
-      setError(
-        "Unable to connect to backend"
-      );
-
+      setError("Unable to connect to backend");
       setMessage("");
     }
   };
@@ -200,7 +236,6 @@ function Sales() {
   // -------------------------------------------------
   // FORMAT DATE
   // -------------------------------------------------
-
   const formatDate = (date) => {
     if (!date) {
       return "-";
@@ -209,9 +244,11 @@ function Sales() {
     return new Date(date).toLocaleString();
   };
 
+  // -------------------------------------------------
+  // PAGE
+  // -------------------------------------------------
   return (
     <div className="sales-page">
-
       {/* HEADER */}
 
       <div className="sales-header">
@@ -265,19 +302,14 @@ function Sales() {
       <div className="sales-form-card">
         <h2>Create Sale</h2>
 
-        <p>
-          Record a new product sale.
-        </p>
+        <p>Record a new product sale.</p>
 
         <form
           className="sales-form"
           onSubmit={handleCreateSale}
         >
-
           <div className="sales-form-group">
-            <label>
-              Product ID
-            </label>
+            <label>Product ID</label>
 
             <input
               type="number"
@@ -285,18 +317,14 @@ function Sales() {
               placeholder="Enter Product ID"
               value={productId}
               onChange={(e) =>
-                setProductId(
-                  e.target.value
-                )
+                setProductId(e.target.value)
               }
               required
             />
           </div>
 
           <div className="sales-form-group">
-            <label>
-              Quantity
-            </label>
+            <label>Quantity</label>
 
             <input
               type="number"
@@ -304,18 +332,14 @@ function Sales() {
               placeholder="Enter Quantity"
               value={quantity}
               onChange={(e) =>
-                setQuantity(
-                  e.target.value
-                )
+                setQuantity(e.target.value)
               }
               required
             />
           </div>
 
           <div className="sales-form-group">
-            <label>
-              Selling Price
-            </label>
+            <label>Selling Price</label>
 
             <input
               type="number"
@@ -324,9 +348,7 @@ function Sales() {
               placeholder="Enter Price"
               value={price}
               onChange={(e) =>
-                setPrice(
-                  e.target.value
-                )
+                setPrice(e.target.value)
               }
               required
             />
@@ -340,29 +362,23 @@ function Sales() {
               Create Sale
             </button>
           </div>
-
         </form>
       </div>
 
       {/* SALES HISTORY */}
 
       <div className="sales-history">
-
         <div className="sales-history-header">
           <h2>Sales History</h2>
 
           <p>
             Total Sales:{" "}
-            <strong>
-              {sales.length}
-            </strong>
+            <strong>{sales.length}</strong>
           </p>
         </div>
 
         <div className="sales-table-container">
-
           <table className="sales-table">
-
             <thead>
               <tr>
                 <th>S.No</th>
@@ -377,7 +393,6 @@ function Sales() {
             </thead>
 
             <tbody>
-
               {sales.length === 0 ? (
                 <tr>
                   <td colSpan="8">
@@ -385,58 +400,42 @@ function Sales() {
                   </td>
                 </tr>
               ) : (
-                sales.map(
-                  (sale, index) => (
-                    <tr key={sale.id}>
+                sales.map((sale, index) => (
+                  <tr key={sale.id}>
+                    <td>{index + 1}</td>
 
-                      <td>
-                        {index + 1}
-                      </td>
+                    <td>{sale.id}</td>
 
-                      <td>
-                        {sale.id}
-                      </td>
+                    <td>{sale.product_id}</td>
 
-                      <td>
-                        {sale.product_id}
-                      </td>
+                    <td>{sale.quantity}</td>
 
-                      <td>
-                        {sale.quantity}
-                      </td>
+                    <td>
+                      ₹
+                      {Number(
+                        sale.price
+                      ).toFixed(2)}
+                    </td>
 
-                      <td>
-                        ₹
-                        {Number(
-                          sale.price
-                        ).toFixed(2)}
-                      </td>
+                    <td>
+                      ₹
+                      {Number(
+                        sale.total_amount
+                      ).toFixed(2)}
+                    </td>
 
-                      <td>
-                        ₹
-                        {Number(
-                          sale.total_amount
-                        ).toFixed(2)}
-                      </td>
+                    <td>{sale.sold_by}</td>
 
-                      <td>
-                        {sale.sold_by}
-                      </td>
-
-                      <td>
-                        {formatDate(
-                          sale.created_at
-                        )}
-                      </td>
-
-                    </tr>
-                  )
-                )
+                    <td>
+                      {formatDate(
+                        sale.created_at
+                      )}
+                    </td>
+                  </tr>
+                ))
               )}
-
             </tbody>
           </table>
-
         </div>
       </div>
     </div>

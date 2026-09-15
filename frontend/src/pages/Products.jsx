@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Products.css";
 
 import API_BASE_URL from "../config";
+
 function Products() {
   const navigate = useNavigate();
 
@@ -24,56 +25,30 @@ function Products() {
   const [user, setUser] = useState(null);
 
   // EDIT STATE
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct, setEditingProduct] =
+    useState(null);
 
   // PRODUCT FORM
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] =
+    useState("");
   const [sku, setSku] = useState("");
   const [barcode, setBarcode] = useState("");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [minimumStock, setMinimumStock] = useState(5);
-  const [newCategoryId, setNewCategoryId] = useState("");
+  const [minimumStock, setMinimumStock] =
+    useState(5);
+  const [newCategoryId, setNewCategoryId] =
+    useState("");
 
-  const token = localStorage.getItem("access_token");
+  const token =
+    localStorage.getItem("access_token");
 
   const isAdmin = user?.role === "admin";
 
   // -----------------------------
-  // FETCH CURRENT USER
-  // -----------------------------
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      setUser(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load user information");
-    }
-  };
-
-  // -----------------------------
   // FETCH PRODUCTS
   // -----------------------------
-
   const fetchProducts = async () => {
     const skip = (page - 1) * limit;
 
@@ -85,7 +60,9 @@ function Products() {
       `&order=asc`;
 
     if (search) {
-      url += `&search=${encodeURIComponent(search)}`;
+      url += `&search=${encodeURIComponent(
+        search
+      )}`;
     }
 
     if (categoryId) {
@@ -101,6 +78,14 @@ function Products() {
 
       const data = await response.json();
 
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
+
       if (!response.ok) {
         setError(
           data.message ||
@@ -110,27 +95,158 @@ function Products() {
         return;
       }
 
-      setProducts(data.items);
-      setTotal(data.total);
+      setProducts(
+        Array.isArray(data.items)
+          ? data.items
+          : []
+      );
+
+      setTotal(data.total ?? 0);
       setError("");
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
     }
   };
 
+  // -----------------------------
+  // INITIAL USER LOAD
+  // -----------------------------
   useEffect(() => {
-    fetchCurrentUser();
-  }, []);
+    if (!token) {
+      navigate("/");
+      return;
+    }
 
+    const loadCurrentUser = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/auth/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+          localStorage.removeItem(
+            "access_token"
+          );
+          navigate("/");
+          return;
+        }
+
+        if (!response.ok) {
+          setError(
+            data.detail ||
+              data.message ||
+              "Unable to load user information"
+          );
+          return;
+        }
+
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          "Unable to load user information"
+        );
+      }
+    };
+
+    loadCurrentUser();
+  }, [token, navigate]);
+
+  // -----------------------------
+  // LOAD PRODUCTS
+  // -----------------------------
   useEffect(() => {
-    fetchProducts();
-  }, [page]);
+    if (!token) {
+      return;
+    }
+
+    const loadProducts = async () => {
+      const skip = (page - 1) * limit;
+
+      let url =
+        `${API_BASE_URL}/api/v1/products/?` +
+        `skip=${skip}` +
+        `&limit=${limit}` +
+        `&sort_by=id` +
+        `&order=asc`;
+
+      if (search) {
+        url += `&search=${encodeURIComponent(
+          search
+        )}`;
+      }
+
+      if (categoryId) {
+        url += `&category_id=${categoryId}`;
+      }
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+          localStorage.removeItem(
+            "access_token"
+          );
+          navigate("/");
+          return;
+        }
+
+        if (!response.ok) {
+          setError(
+            data.message ||
+              data.detail ||
+              "Failed to load products"
+          );
+          return;
+        }
+
+        setProducts(
+          Array.isArray(data.items)
+            ? data.items
+            : []
+        );
+
+        setTotal(data.total ?? 0);
+        setError("");
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          "Unable to connect to backend"
+        );
+      }
+    };
+
+    loadProducts();
+  }, [
+    page,
+    token,
+    navigate,
+    search,
+    categoryId,
+  ]);
 
   // -----------------------------
   // SEARCH
   // -----------------------------
-
   const handleSearch = (e) => {
     e.preventDefault();
 
@@ -144,7 +260,6 @@ function Products() {
   // -----------------------------
   // RESET FORM
   // -----------------------------
-
   const resetProductForm = () => {
     setName("");
     setDescription("");
@@ -160,12 +275,13 @@ function Products() {
   // -----------------------------
   // ADD PRODUCT
   // -----------------------------
-
   const handleAddProduct = async (e) => {
     e.preventDefault();
 
     if (!isAdmin) {
-      setError("Only admin can add products");
+      setError(
+        "Only admin can add products"
+      );
       return;
     }
 
@@ -179,6 +295,7 @@ function Products() {
       setError(
         "Name, SKU, price, quantity and category are required"
       );
+
       setMessage("");
       return;
     }
@@ -189,7 +306,8 @@ function Products() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -199,14 +317,26 @@ function Products() {
             barcode,
             price: Number(price),
             quantity: Number(quantity),
-            minimum_stock: Number(minimumStock),
+            minimum_stock: Number(
+              minimumStock
+            ),
             image_url: "",
-            category_id: Number(newCategoryId),
+            category_id: Number(
+              newCategoryId
+            ),
           }),
         }
       );
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
 
       if (!response.ok) {
         setError(
@@ -214,11 +344,15 @@ function Products() {
             data.detail ||
             "Failed to create product"
         );
+
         setMessage("");
         return;
       }
 
-      setMessage("Product created successfully");
+      setMessage(
+        "Product created successfully"
+      );
+
       setError("");
 
       resetProductForm();
@@ -227,34 +361,44 @@ function Products() {
       if (page !== 1) {
         setPage(1);
       } else {
-        fetchProducts();
+        await fetchProducts();
       }
     } catch (error) {
       console.error(error);
-      setError("Unable to connect to backend");
+
+      setError(
+        "Unable to connect to backend"
+      );
     }
   };
 
   // -----------------------------
   // EDIT PRODUCT
   // -----------------------------
-
   const handleEditProduct = (product) => {
     if (!isAdmin) {
-      setError("Only admin can edit products");
+      setError(
+        "Only admin can edit products"
+      );
       return;
     }
 
     setEditingProduct(product);
 
     setName(product.name || "");
-    setDescription(product.description || "");
+    setDescription(
+      product.description || ""
+    );
     setSku(product.sku || "");
     setBarcode(product.barcode || "");
     setPrice(product.price ?? "");
     setQuantity(product.quantity ?? "");
-    setMinimumStock(product.minimum_stock ?? 5);
-    setNewCategoryId(product.category_id ?? "");
+    setMinimumStock(
+      product.minimum_stock ?? 5
+    );
+    setNewCategoryId(
+      product.category_id ?? ""
+    );
 
     setShowAddForm(true);
 
@@ -270,12 +414,13 @@ function Products() {
   // -----------------------------
   // UPDATE PRODUCT
   // -----------------------------
-
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
 
     if (!isAdmin) {
-      setError("Only admin can update products");
+      setError(
+        "Only admin can update products"
+      );
       return;
     }
 
@@ -293,6 +438,7 @@ function Products() {
       setError(
         "Name, SKU, price, quantity and category are required"
       );
+
       setMessage("");
       return;
     }
@@ -303,7 +449,8 @@ function Products() {
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -313,14 +460,28 @@ function Products() {
             barcode,
             price: Number(price),
             quantity: Number(quantity),
-            minimum_stock: Number(minimumStock),
-            image_url: editingProduct.image_url || "",
-            category_id: Number(newCategoryId),
+            minimum_stock: Number(
+              minimumStock
+            ),
+            image_url:
+              editingProduct.image_url ||
+              "",
+            category_id: Number(
+              newCategoryId
+            ),
           }),
         }
       );
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
 
       if (!response.ok) {
         setError(
@@ -328,21 +489,28 @@ function Products() {
             data.detail ||
             "Failed to update product"
         );
+
         setMessage("");
         return;
       }
 
-      setMessage("Product updated successfully");
+      setMessage(
+        "Product updated successfully"
+      );
+
       setError("");
 
       resetProductForm();
       setShowAddForm(false);
 
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
 
-      setError("Unable to update product");
+      setError(
+        "Unable to update product"
+      );
+
       setMessage("");
     }
   };
@@ -350,7 +518,6 @@ function Products() {
   // -----------------------------
   // CANCEL FORM
   // -----------------------------
-
   const handleCancelForm = () => {
     resetProductForm();
 
@@ -361,10 +528,13 @@ function Products() {
   // -----------------------------
   // DELETE PRODUCT
   // -----------------------------
-
-  const handleDeleteProduct = async (productId) => {
+  const handleDeleteProduct = async (
+    productId
+  ) => {
     if (!isAdmin) {
-      setError("Only admin can delete products");
+      setError(
+        "Only admin can delete products"
+      );
       return;
     }
 
@@ -395,6 +565,14 @@ function Products() {
         data = {};
       }
 
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
+
       if (!response.ok) {
         setError(
           data.message ||
@@ -406,27 +584,33 @@ function Products() {
         return;
       }
 
-      setMessage("Product deleted successfully");
+      setMessage(
+        "Product deleted successfully"
+      );
+
       setError("");
 
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
 
-      setError("Unable to connect to backend");
+      setError(
+        "Unable to connect to backend"
+      );
     }
   };
 
   // -----------------------------
   // UPLOAD IMAGE
   // -----------------------------
-
   const handleImageUpload = async (
     productId,
     file
   ) => {
     if (!isAdmin) {
-      setError("Only admin can upload product images");
+      setError(
+        "Only admin can upload product images"
+      );
       return;
     }
 
@@ -443,16 +627,22 @@ function Products() {
         `${API_BASE_URL}/api/v1/products/${productId}/image`,
         {
           method: "POST",
-
           headers: {
             Authorization: `Bearer ${token}`,
           },
-
           body: formData,
         }
       );
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        localStorage.removeItem(
+          "access_token"
+        );
+        navigate("/");
+        return;
+      }
 
       if (!response.ok) {
         setError(
@@ -471,7 +661,7 @@ function Products() {
 
       setError("");
 
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
 
@@ -479,22 +669,26 @@ function Products() {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages =
+    Math.ceil(total / limit);
 
   return (
     <div className="products-page">
       {/* HEADER */}
-
       <div className="products-header">
         <div>
           <h1>Products</h1>
 
-          <p>Manage your inventory products</p>
+          <p>
+            Manage your inventory products
+          </p>
 
           {user && (
             <p>
               Logged in as:{" "}
-              <strong>{user.username}</strong>{" "}
+              <strong>
+                {user.username}
+              </strong>{" "}
               ({user.role})
             </p>
           )}
@@ -531,7 +725,6 @@ function Products() {
       </div>
 
       {/* ADD / EDIT FORM */}
-
       {isAdmin && showAddForm && (
         <form
           className="add-product-form"
@@ -562,7 +755,9 @@ function Products() {
               placeholder="Description"
               value={description}
               onChange={(e) =>
-                setDescription(e.target.value)
+                setDescription(
+                  e.target.value
+                )
               }
             />
 
@@ -611,7 +806,9 @@ function Products() {
               placeholder="Minimum Stock"
               value={minimumStock}
               onChange={(e) =>
-                setMinimumStock(e.target.value)
+                setMinimumStock(
+                  e.target.value
+                )
               }
             />
 
@@ -621,7 +818,9 @@ function Products() {
               placeholder="Category ID"
               value={newCategoryId}
               onChange={(e) =>
-                setNewCategoryId(e.target.value)
+                setNewCategoryId(
+                  e.target.value
+                )
               }
             />
           </div>
@@ -648,7 +847,6 @@ function Products() {
       )}
 
       {/* SUCCESS */}
-
       {message && (
         <p className="products-success">
           {message}
@@ -656,7 +854,6 @@ function Products() {
       )}
 
       {/* ERROR */}
-
       {error && (
         <p className="products-error">
           {typeof error === "string"
@@ -666,7 +863,6 @@ function Products() {
       )}
 
       {/* SEARCH */}
-
       <form
         className="product-search"
         onSubmit={handleSearch}
@@ -700,7 +896,6 @@ function Products() {
       </p>
 
       {/* PRODUCT TABLE */}
-
       <div className="products-table-container">
         <table className="products-table">
           <thead>
@@ -767,9 +962,13 @@ function Products() {
 
                     <td>{product.id}</td>
 
-                    <td>{product.name}</td>
+                    <td>
+                      {product.name}
+                    </td>
 
-                    <td>{product.sku}</td>
+                    <td>
+                      {product.sku}
+                    </td>
 
                     <td>
                       ₹{product.price}
@@ -780,15 +979,16 @@ function Products() {
                     </td>
 
                     <td>
-                      {product.minimum_stock}
+                      {
+                        product.minimum_stock
+                      }
                     </td>
 
                     <td>
                       {product.category_id}
                     </td>
 
-                    {/* ADMIN ONLY IMAGE UPLOAD */}
-
+                    {/* ADMIN IMAGE UPLOAD */}
                     {isAdmin && (
                       <td>
                         <input
@@ -798,15 +998,15 @@ function Products() {
                           onChange={(e) =>
                             handleImageUpload(
                               product.id,
-                              e.target.files[0]
+                              e.target
+                                .files[0]
                             )
                           }
                         />
                       </td>
                     )}
 
-                    {/* ADMIN ONLY EDIT + DELETE */}
-
+                    {/* ADMIN EDIT / DELETE */}
                     {isAdmin && (
                       <td>
                         <div className="product-actions">
@@ -845,7 +1045,6 @@ function Products() {
       </div>
 
       {/* PAGINATION */}
-
       <div className="pagination">
         <button
           disabled={page === 1}

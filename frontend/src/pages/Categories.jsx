@@ -19,49 +19,6 @@ function Categories() {
   const token = localStorage.getItem("access_token");
 
   // ---------------------------------
-  // COMMON AUTH HEADERS
-  // ---------------------------------
-  const authHeaders = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  // ---------------------------------
-  // FETCH CURRENT USER
-  // ---------------------------------
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/auth/me`,
-        {
-          headers: authHeaders,
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.status === 401) {
-        localStorage.removeItem("access_token");
-        navigate("/");
-        return;
-      }
-
-      if (!response.ok) {
-        setError(
-          data.detail ||
-            data.message ||
-            "Unable to load user information"
-        );
-        return;
-      }
-
-      setUser(data);
-    } catch (err) {
-      console.error("User fetch error:", err);
-      setError("Unable to connect to backend");
-    }
-  };
-
-  // ---------------------------------
   // FETCH CATEGORIES
   // ---------------------------------
   const fetchCategories = async () => {
@@ -71,7 +28,9 @@ function Categories() {
       const response = await fetch(
         `${API_BASE_URL}/api/v1/categories/`,
         {
-          headers: authHeaders,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -118,9 +77,92 @@ function Categories() {
       return;
     }
 
-    fetchCurrentUser();
-    fetchCategories();
-  }, []);
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [
+          userResponse,
+          categoriesResponse,
+        ] = await Promise.all([
+          fetch(
+            `${API_BASE_URL}/api/v1/auth/me`,
+            {
+              headers,
+            }
+          ),
+          fetch(
+            `${API_BASE_URL}/api/v1/categories/`,
+            {
+              headers,
+            }
+          ),
+        ]);
+
+        if (
+          userResponse.status === 401 ||
+          categoriesResponse.status === 401
+        ) {
+          localStorage.removeItem(
+            "access_token"
+          );
+          navigate("/");
+          return;
+        }
+
+        const userData =
+          await userResponse.json();
+
+        const categoriesData =
+          await categoriesResponse.json();
+
+        if (!userResponse.ok) {
+          setError(
+            userData.detail ||
+              userData.message ||
+              "Unable to load user information"
+          );
+          return;
+        }
+
+        if (!categoriesResponse.ok) {
+          setError(
+            categoriesData.detail ||
+              categoriesData.message ||
+              "Failed to load categories"
+          );
+          return;
+        }
+
+        setUser(userData);
+
+        setCategories(
+          Array.isArray(categoriesData)
+            ? categoriesData
+            : []
+        );
+
+        setError("");
+      } catch (err) {
+        console.error(
+          "Initial categories load error:",
+          err
+        );
+
+        setError(
+          "Unable to connect to backend"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [token, navigate]);
 
   // ---------------------------------
   // ADD CATEGORY - ADMIN ONLY
@@ -142,7 +184,7 @@ function Categories() {
         {
           method: "POST",
           headers: {
-            ...authHeaders,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -222,7 +264,9 @@ function Categories() {
         `${API_BASE_URL}/api/v1/categories/${categoryId}`,
         {
           method: "DELETE",
-          headers: authHeaders,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -398,9 +442,7 @@ function Categories() {
                   "0 2px 8px rgba(0,0,0,0.08)",
               }}
             >
-              <h3>
-                {category.name}
-              </h3>
+              <h3>{category.name}</h3>
 
               <p>
                 {category.description ||
