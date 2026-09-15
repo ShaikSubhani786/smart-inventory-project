@@ -9,6 +9,8 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
+import logging
+
 import cloudinary
 import cloudinary.uploader
 
@@ -39,6 +41,13 @@ from app.crud.product import (
     update_product,
     delete_product
 )
+
+
+# -------------------------------------------------
+# LOGGING
+# -------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------
@@ -221,13 +230,12 @@ def upload_product_image(
     except HTTPException:
         raise
 
-    except Exception as error:
+    except Exception:
 
         db.rollback()
 
-        print(
-            "Cloudinary upload error:",
-            error
+        logger.exception(
+            "Cloudinary product image upload failed"
         )
 
         raise HTTPException(
