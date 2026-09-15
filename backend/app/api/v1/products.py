@@ -1,9 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status , UploadFile, File
-import os
-import shutil
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    UploadFile,
+    File
+)
+
 from sqlalchemy.orm import Session
 
+import cloudinary
+import cloudinary.uploader
+
 from app.api.dependencies import get_db
+
+from app.core.config import settings
+
 from app.core.security import (
     get_current_user,
     require_admin
@@ -29,6 +41,18 @@ from app.crud.product import (
 )
 
 
+# -------------------------------------------------
+# CLOUDINARY CONFIGURATION
+# -------------------------------------------------
+
+cloudinary.config(
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET,
+    secure=True
+)
+
+
 router = APIRouter(
     prefix="/api/v1/products",
     tags=["Products"]
@@ -39,6 +63,7 @@ router = APIRouter(
 # CREATE PRODUCT
 # Admin only
 # -------------------------------------------------
+
 @router.post(
     "/",
     response_model=ProductResponse,
@@ -49,6 +74,7 @@ def create_new_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+
     # Check whether category exists
     category = (
         db.query(Category)
@@ -75,13 +101,17 @@ def create_new_product(
             detail="SKU already exists"
         )
 
-    return create_product(db, product)
+    return create_product(
+        db,
+        product
+    )
 
 
 # -------------------------------------------------
 # GET ALL PRODUCTS
 # Search + Category Filter + Pagination + Sorting
 # -------------------------------------------------
+
 @router.get(
     "/",
     response_model=ProductListResponse
@@ -96,6 +126,7 @@ def read_products(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     return get_products(
         db=db,
         search=search,
@@ -105,10 +136,14 @@ def read_products(
         sort_by=sort_by,
         order=order
     )
+
+
 # -------------------------------------------------
 # UPLOAD PRODUCT IMAGE
 # Admin only
+# Cloudinary storage
 # -------------------------------------------------
+
 @router.post("/{product_id}/image")
 def upload_product_image(
     product_id: int,
@@ -116,6 +151,8 @@ def upload_product_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+
+    # Find product
     product = get_product(
         db,
         product_id
@@ -127,6 +164,7 @@ def upload_product_image(
             detail="Product not found"
         )
 
+    # Allowed image types
     allowed_types = [
         "image/jpeg",
         "image/png",
@@ -139,44 +177,69 @@ def upload_product_image(
             detail="Only JPG, PNG and WEBP images are allowed"
         )
 
-    upload_folder = "uploads/products"
+    try:
 
-    os.makedirs(
-        upload_folder,
-        exist_ok=True
-    )
-
-    file_extension = os.path.splitext(
-        image.filename
-    )[1]
-
-    filename = f"product_{product_id}{file_extension}"
-
-    file_path = os.path.join(
-        upload_folder,
-        filename
-    )
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(
+        # Upload image to Cloudinary
+        upload_result = cloudinary.uploader.upload(
             image.file,
-            buffer
+
+            folder="smart_inventory/products",
+
+            public_id=f"product_{product_id}",
+
+            overwrite=True,
+
+            resource_type="image"
         )
 
-    product.image_url = f"/uploads/products/{filename}"
+        # Get permanent HTTPS Cloudinary URL
+        image_url = upload_result.get(
+            "secure_url"
+        )
 
-    db.commit()
-    db.refresh(product)
+        if not image_url:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Cloudinary did not return an image URL"
+            )
 
-    return {
-        "message": "Product image uploaded successfully",
-        "image_url": product.image_url
-    }
+        # Save Cloudinary URL in PostgreSQL
+        product.image_url = image_url
+
+        db.commit()
+
+        db.refresh(product)
+
+        return {
+            "message":
+                "Product image uploaded successfully",
+
+            "image_url":
+                product.image_url
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+
+        db.rollback()
+
+        print(
+            "Cloudinary upload error:",
+            error
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to upload product image"
+        )
 
 
 # -------------------------------------------------
 # GET PRODUCT BY ID
 # -------------------------------------------------
+
 @router.get(
     "/{product_id}",
     response_model=ProductResponse
@@ -186,6 +249,7 @@ def read_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     product = get_product(
         db,
         product_id
@@ -204,6 +268,7 @@ def read_product(
 # UPDATE PRODUCT
 # Admin only
 # -------------------------------------------------
+
 @router.put(
     "/{product_id}",
     response_model=ProductResponse
@@ -214,10 +279,14 @@ def update_existing_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+
     # Check category before updating
     category = (
         db.query(Category)
-        .filter(Category.id == product.category_id)
+        .filter(
+            Category.id ==
+            product.category_id
+        )
         .first()
     )
 
@@ -246,6 +315,7 @@ def update_existing_product(
 # DELETE PRODUCT
 # Admin only
 # -------------------------------------------------
+
 @router.delete(
     "/{product_id}"
 )
@@ -254,6 +324,7 @@ def remove_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+
     deleted_product = delete_product(
         db,
         product_id
@@ -266,5 +337,6 @@ def remove_product(
         )
 
     return {
-        "message": "Product deleted successfully"
+        "message":
+            "Product deleted successfully"
     }
