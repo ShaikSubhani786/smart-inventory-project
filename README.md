@@ -77,7 +77,51 @@ The application is deployed to the cloud, with the backend hosted on **Render** 
   - Automatic Alembic migrations during backend startup
 
 ---
+## 📸 Application Screenshots
 
+### Dashboard
+
+The dashboard provides a quick overview of products, categories, stock levels, and low-stock information.
+
+![Smart Inventory Dashboard](screenshots/dashboard.png)
+
+### Product Management
+
+Administrators can manage products, inventory information, pricing, categories, and cloud-hosted product images.
+
+![Product Management](screenshots/products.png)
+
+### Category Management
+
+Product categories can be viewed by authenticated users and managed by administrators.
+
+![Category Management](screenshots/categories.png)
+
+### Stock Management
+
+The stock management module records Stock In and Stock Out transactions and maintains inventory movement history.
+
+![Stock Management](screenshots/stock.png)
+
+### Sales Management
+
+Authenticated users can create sales transactions and view existing sales records.
+
+![Sales Management](screenshots/sales.png)
+
+### Purchase Management
+
+Administrators can record inventory purchases while authenticated users can view purchase history.
+
+![Purchase Management](screenshots/purchases.png)
+
+### Reports
+
+The reports module provides inventory summaries, stock information, and low-stock product reporting.
+
+![Inventory Reports](screenshots/reports.png)
+
+---
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -119,6 +163,9 @@ The application is deployed to the cloud, with the backend hosted on **Render** 
 - **VS Code**
 
 ---
+---
+
+
 
 ## 🏗️ Project Architecture
 
